@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>كشف الحضور الذكي</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="app">
+
+  <!-- الشريط العلوي: العنوان + ختم الشهر/السنة -->
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 48 48" width="30" height="30">
+          <rect x="8" y="6" width="32" height="36" rx="3" fill="none" stroke="currentColor" stroke-width="2.4"/>
+          <line x1="14" y1="16" x2="34" y2="16" stroke="currentColor" stroke-width="2.2"/>
+          <line x1="14" y1="23" x2="34" y2="23" stroke="currentColor" stroke-width="2.2"/>
+          <line x1="14" y1="30" x2="27" y2="30" stroke="currentColor" stroke-width="2.2"/>
+        </svg>
+      </div>
+      <div>
+        <h1>كشف الحضور الذكي</h1>
+        <p class="subtitle">من صورة الجدول إلى ملف الرواتب في ثوانٍ</p>
+      </div>
+    </div>
+
+    <div class="stamp" id="stamp">
+      <span class="stamp-month" id="stampMonth">—</span>
+      <span class="stamp-year" id="stampYear">—</span>
+    </div>
+  </header>
+
+  <!-- الجسم الرئيسي: بطاقتان جنبًا إلى جنب -->
+  <main class="grid">
+
+    <!-- بطاقة رفع الصورة -->
+    <section class="card">
+      <h2>صورة جدول الحضور</h2>
+
+      <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="اختر صورة جدول الحضور">
+        <svg viewBox="0 0 64 64" width="42" height="42" class="dropzone-icon">
+          <path d="M18 10h20l10 10v34H18z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/>
+          <path d="M38 10v10h10" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/>
+          <path d="M24 40l6-8 5 6 5-7 6 9" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/>
+          <circle cx="26" cy="27" r="2.4" fill="currentColor"/>
+        </svg>
+        <p class="dropzone-text">اضغط لاختيار صورة، أو اسحبها هنا</p>
+        <p class="dropzone-hint">JPG · PNG · WEBP</p>
+      </div>
+
+      <div class="preview" id="previewWrap" hidden>
+        <img id="previewImg" alt="معاينة صورة الجدول">
+        <div class="preview-footer">
+          <span id="imageName" class="image-name"></span>
+          <button type="button" class="btn-outline btn-small" id="replaceBtn">استبدال</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- بطاقة بيانات الكشف -->
+    <section class="card">
+      <h2>بيانات الكشف</h2>
+
+      <div class="field-row">
+        <div class="field">
+          <label for="monthSelect">الشهر</label>
+          <select id="monthSelect"></select>
+        </div>
+        <div class="field">
+          <label for="yearInput">السنة</label>
+          <input type="number" id="yearInput" min="2000" max="2100">
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="nameInput">اسم الموظف <span class="optional">(اختياري)</span></label>
+        <input type="text" id="nameInput" placeholder="مثال: أحمد بن يوسف">
+      </div>
+
+      <div class="field">
+        <label for="phoneInput">رقم الهاتف <span class="optional">(اختياري)</span></label>
+        <input type="text" id="phoneInput" placeholder="مثال: 0555 12 34 56">
+      </div>
+
+      <div class="field">
+        <label>مجلد الحفظ</label>
+        <div class="folder-row">
+          <button type="button" class="btn-outline" id="browseBtn">تصفح...</button>
+          <span id="folderPath" class="folder-path"></span>
+        </div>
+      </div>
+
+      <label class="switch-row">
+        <span>فتح الملف تلقائيًا بعد الإنشاء</span>
+        <span class="switch">
+          <input type="checkbox" id="openToggle" checked>
+          <span class="slider"></span>
+        </span>
+      </label>
+
+      <button type="button" class="btn-primary" id="createBtn">
+        <span class="btn-icon">📄</span> إنشاء كشف جديد
+      </button>
+    </section>
+
+  </main>
+
+  <!-- شريط الحالة (Toast) -->
+  <div class="status" id="statusBar" role="status" aria-live="polite"></div>
+
+  <!-- نافذة تأكيد مخصصة (بديل لنافذة النظام الافتراضية) -->
+  <div class="modal-overlay" id="confirmOverlay" hidden>
+    <div class="modal">
+      <p id="confirmMessage"></p>
+      <div class="modal-actions">
+        <button type="button" class="btn-outline" id="confirmCancel">إلغاء</button>
+        <button type="button" class="btn-primary btn-small" id="confirmOk">استبدال</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
