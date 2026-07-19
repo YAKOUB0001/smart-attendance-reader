@@ -58,7 +58,7 @@ html, body{
 }
 
 .app{
-  max-width: 1040px;
+  max-width: 1200px;
   margin: 0 auto;
   padding: 28px 32px 90px;
   min-height: 100%;
@@ -119,6 +119,9 @@ html, body{
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 22px;
+}
+@media (min-width: 980px){
+  .grid{ grid-template-columns: 1fr 1fr 1fr; }
 }
 @media (max-width: 760px){
   .grid{ grid-template-columns: 1fr; }
@@ -188,9 +191,12 @@ html, body{
 
 .field{ margin-bottom: 16px; }
 .field label{
-  display: block;
+  display: flex;
+  align-items: flex-end;
+  min-height: 34px;
   font-size: 13px;
   font-weight: 600;
+  line-height: 1.3;
   color: var(--ink-soft);
   margin-bottom: 6px;
 }
@@ -221,6 +227,17 @@ input:focus, select:focus{
   text-overflow: ellipsis;
   white-space: nowrap;
   flex: 1;
+}
+
+/* ---------------- بطاقة الراتب: تلميح إجمالي سعر الساعة ---------------- */
+.hint-line{
+  font-size: 12.5px;
+  color: var(--ink-soft);
+  margin: -6px 0 16px;
+}
+.hint-line strong{
+  color: var(--brick);
+  font-size: 13.5px;
 }
 
 /* ---------------- مفتاح التبديل (Switch) ---------------- */

@@ -5,6 +5,9 @@
 #
 # هذه الوحدة تكشف "Api" لجافاسكريبت: أي زر في الواجهة يستدعي دالة بايثون
 # هنا عبر window.pywebview.api.اسم_الدالة() من ملف web/app.js.
+#
+# تحديث: أصبحت الآن تستقبل أيضًا بيانات حساب الراتب (سعر الساعة الأساسي،
+# العلاوة، التسبيقات) من الواجهة، وتمررها إلى وحدة توليد الإكسل.
 # -----------------------------------------------------------------------------
 
 import os
@@ -24,6 +27,11 @@ INDEX_HTML = os.path.join(WEB_DIR, "index.html")
 
 IMAGE_FILE_TYPES = ("ملفات الصور (*.jpg;*.jpeg;*.png;*.bmp;*.webp)", "كل الملفات (*.*)")
 
+# القيم الافتراضية لحساب الراتب (دج/ساعة)
+DEFAULT_BASE_RATE = 150.0
+DEFAULT_ALLOWANCE_RATE = 50.0
+DEFAULT_ADVANCES = 0.0
+
 
 class Api:
     """
@@ -38,12 +46,18 @@ class Api:
 
     # -------------------------------------------------------------------
     def get_defaults(self):
-        """القيم الافتراضية عند فتح البرنامج: الشهر والسنة الحاليان، ومجلد الحفظ الافتراضي."""
+        """
+        القيم الافتراضية عند فتح البرنامج: الشهر والسنة الحاليان، مجلد الحفظ
+        الافتراضي، بالإضافة إلى القيم الافتراضية لحساب الراتب.
+        """
         today = date.today()
         return {
             "month": today.month,
             "year": today.year,
             "outputDir": DEFAULT_OUTPUT_DIR,
+            "baseRate": DEFAULT_BASE_RATE,
+            "allowanceRate": DEFAULT_ALLOWANCE_RATE,
+            "advances": DEFAULT_ADVANCES,
         }
 
     # -------------------------------------------------------------------
@@ -53,7 +67,6 @@ class Api:
             webview.FOLDER_DIALOG, directory=DEFAULT_OUTPUT_DIR
         )
         if result:
-            # بعض الأنظمة ترجع نصًا مباشرة، وأخرى ترجع قائمة تحتوي مسارًا واحدًا
             return result[0] if isinstance(result, (list, tuple)) else result
         return None
 
@@ -93,7 +106,10 @@ class Api:
 
     # -------------------------------------------------------------------
     def create_attendance(self, options):
-        """ينشئ ملف الإكسل الفعلي بناءً على البيانات القادمة من الواجهة."""
+        """
+        ينشئ ملف الإكسل الفعلي بناءً على البيانات القادمة من الواجهة،
+        بما فيها بيانات حساب الراتب (سعر الساعة الأساسي، العلاوة، التسبيقات).
+        """
         try:
             month_index = int(options.get("month"))
             year = int(options.get("year"))
@@ -101,6 +117,11 @@ class Api:
             phone = (options.get("phone") or "").strip()
             folder = options.get("folder") or DEFAULT_OUTPUT_DIR
             open_after = bool(options.get("openAfter"))
+
+            # قراءة بيانات الراتب مع قيم احتياطية آمنة إن وصلت فارغة أو غير صالحة
+            base_rate = self._safe_float(options.get("baseRate"), DEFAULT_BASE_RATE)
+            allowance_rate = self._safe_float(options.get("allowanceRate"), DEFAULT_ALLOWANCE_RATE)
+            advances = self._safe_float(options.get("advances"), DEFAULT_ADVANCES)
 
             os.makedirs(folder, exist_ok=True)
 
@@ -110,6 +131,9 @@ class Api:
             generate_attendance_template(
                 month=month_index, year=year,
                 employee_name=employee_name, phone=phone,
+                base_rate=base_rate,
+                allowance_rate=allowance_rate,
+                advances=advances,
                 output_path=full_path,
             )
 
@@ -123,6 +147,16 @@ class Api:
 
     # -------------------------------------------------------------------
     @staticmethod
+    def _safe_float(value, fallback):
+        """يحوّل القيمة إلى float بأمان، ويرجع القيمة الاحتياطية عند الفشل."""
+        try:
+            result = float(value)
+            return result if result >= 0 else fallback
+        except (TypeError, ValueError):
+            return fallback
+
+    # -------------------------------------------------------------------
+    @staticmethod
     def _build_file_name(year, month_index):
         return f"attendance_{int(year)}_{int(month_index):02d}.xlsx"
 
@@ -132,13 +166,12 @@ class Api:
         """يفتح ملف الإكسل الناتج ببرنامج الإكسل الافتراضي حسب نظام التشغيل."""
         try:
             if sys.platform.startswith("win"):
-                os.startfile(path)  # خاص بويندوز فقط
+                os.startfile(path)
             elif sys.platform == "darwin":
                 subprocess.run(["open", path], check=False)
             else:
                 subprocess.run(["xdg-open", path], check=False)
         except Exception:
-            # فشل الفتح التلقائي لا يجب أن يوقف البرنامج
             pass
 
 
@@ -149,8 +182,8 @@ def main():
         INDEX_HTML,
         js_api=api,
         width=1080,
-        height=720,
-        min_size=(820, 600),
+        height=760,
+        min_size=(860, 640),
     )
     webview.start()
 

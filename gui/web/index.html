@@ -33,7 +33,7 @@
     </div>
   </header>
 
-  <!-- الجسم الرئيسي: بطاقتان جنبًا إلى جنب -->
+  <!-- الجسم الرئيسي: بطاقات جنبًا إلى جنب -->
   <main class="grid">
 
     <!-- بطاقة رفع الصورة -->
@@ -92,6 +92,29 @@
           <span id="folderPath" class="folder-path"></span>
         </div>
       </div>
+    </section>
+
+    <!-- بطاقة بيانات الراتب (جديدة) -->
+    <section class="card salary-card">
+      <h2>بيانات حساب الراتب</h2>
+
+      <div class="field-row">
+        <div class="field">
+          <label for="baseRateInput">سعر الساعة الأساسي <span class="optional">(دج)</span></label>
+          <input type="number" id="baseRateInput" min="0" step="0.01" value="150">
+        </div>
+        <div class="field">
+          <label for="allowanceRateInput">علاوة الساعة <span class="optional">(دج)</span></label>
+          <input type="number" id="allowanceRateInput" min="0" step="0.01" value="50">
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="advancesInput">قيمة التسبيقات <span class="optional">(دج)</span></label>
+        <input type="number" id="advancesInput" min="0" step="0.01" value="0">
+      </div>
+
+      <p class="hint-line" id="rateHint">إجمالي سعر الساعة: <strong id="totalRateDisplay">200.00</strong> دج</p>
 
       <label class="switch-row">
         <span>فتح الملف تلقائيًا بعد الإنشاء</span>

@@ -27,6 +27,11 @@ const els = {
   confirmMessage: document.getElementById("confirmMessage"),
   confirmOk: document.getElementById("confirmOk"),
   confirmCancel: document.getElementById("confirmCancel"),
+  // حقول الراتب الجديدة
+  baseRateInput: document.getElementById("baseRateInput"),
+  allowanceRateInput: document.getElementById("allowanceRateInput"),
+  advancesInput: document.getElementById("advancesInput"),
+  totalRateDisplay: document.getElementById("totalRateDisplay"),
 };
 
 let statusTimer = null;
@@ -51,9 +56,17 @@ function updateStamp() {
   els.stampMonth.textContent = monthText;
   els.stampYear.textContent = els.yearInput.value || "—";
   els.stamp.classList.remove("stamp-pop");
-  // إعادة تشغيل الحركة (إجبار المتصفح على إعادة حسابها)
   void els.stamp.offsetWidth;
   els.stamp.classList.add("stamp-pop");
+}
+
+// -----------------------------------------------------------------------------
+// تحديث عرض "إجمالي سعر الساعة" مباشرة عند تغيير سعر الساعة أو العلاوة
+// -----------------------------------------------------------------------------
+function updateTotalRateDisplay() {
+  const base = parseFloat(els.baseRateInput.value) || 0;
+  const allowance = parseFloat(els.allowanceRateInput.value) || 0;
+  els.totalRateDisplay.textContent = (base + allowance).toFixed(2);
 }
 
 // -----------------------------------------------------------------------------
@@ -97,7 +110,13 @@ async function initApp() {
   els.folderPath.title = defaults.outputDir;
   els.folderPath.dataset.fullPath = defaults.outputDir;
 
+  // القيم الافتراضية لحساب الراتب (قادمة من الخلفية حتى تبقى مصدرًا واحدًا للحقيقة)
+  els.baseRateInput.value = defaults.baseRate;
+  els.allowanceRateInput.value = defaults.allowanceRate;
+  els.advancesInput.value = defaults.advances;
+
   updateStamp();
+  updateTotalRateDisplay();
 }
 
 // -----------------------------------------------------------------------------
@@ -105,7 +124,7 @@ async function initApp() {
 // -----------------------------------------------------------------------------
 async function pickImage() {
   const result = await window.pywebview.api.choose_image();
-  if (!result) return; // المستخدم ألغى الاختيار
+  if (!result) return;
   if (result.error) {
     showStatus("تعذّر فتح الصورة: " + result.error, "error");
     return;
@@ -119,7 +138,7 @@ async function pickImage() {
 }
 
 // -----------------------------------------------------------------------------
-// إنشاء كشف الحضور
+// إنشاء كشف الحضور والراتب
 // -----------------------------------------------------------------------------
 async function createAttendance() {
   const options = {
@@ -129,6 +148,10 @@ async function createAttendance() {
     phone: els.phoneInput.value.trim(),
     folder: els.folderPath.dataset.fullPath || els.folderPath.textContent,
     openAfter: els.openToggle.checked,
+    // بيانات الراتب الجديدة تُرسل كـ JSON إلى الخلفية
+    baseRate: parseFloat(els.baseRateInput.value) || 0,
+    allowanceRate: parseFloat(els.allowanceRateInput.value) || 0,
+    advances: parseFloat(els.advancesInput.value) || 0,
   };
 
   if (!options.month || !options.year) {
@@ -136,9 +159,13 @@ async function createAttendance() {
     return;
   }
 
+  if (options.baseRate <= 0) {
+    showStatus("الرجاء إدخال سعر ساعة أساسي أكبر من صفر.", "error");
+    return;
+  }
+
   els.createBtn.disabled = true;
   try {
-    // التحقق أولًا هل يوجد ملف بنفس اسم الشهر لتجنب الاستبدال غير المقصود
     const existing = await window.pywebview.api.check_exists(options.folder, options.year, options.month);
     if (existing && existing.exists) {
       const confirmed = await askConfirm(
@@ -187,11 +214,9 @@ els.browseBtn.addEventListener("click", pickFolder);
 els.createBtn.addEventListener("click", createAttendance);
 els.monthSelect.addEventListener("change", updateStamp);
 els.yearInput.addEventListener("input", updateStamp);
+els.baseRateInput.addEventListener("input", updateTotalRateDisplay);
+els.allowanceRateInput.addEventListener("input", updateTotalRateDisplay);
 
-// تأثير بصري بسيط عند سحب ملف فوق منطقة الرفع (السحب الفعلي للملفات
-// يُدار عبر نافذة اختيار الملف الأصلية لأن pywebview لا يدعم إفلات
-// الملفات مباشرة من نظام التشغيل بسهولة، لذا نكتفي هنا بالتأثير البصري
-// ونفتح نافذة الاختيار عند الإفلات أيضًا)
 ["dragenter", "dragover"].forEach((evt) =>
   els.dropzone.addEventListener(evt, (e) => {
     e.preventDefault();
